@@ -20,12 +20,31 @@
     <matching.version>3.1<!-- -SNAPSHOT --></matching.version> <!-- version for all matching related packages -->
   </properties>
 
+  <repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
+
   <dependencies>
   
-    <dependency>
+    <!-- <dependency>
         <groupId>de.uni-mannheim.informatik.dws.melt</groupId>
         <artifactId>matching-ml</artifactId>
         <version>${matching.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>de.uni-mannheim.informatik.dws.melt</groupId>
+        <artifactId>matching-eval</artifactId>
+        <version>${matching.version}</version>
+    </dependency> -->
+
+    <dependency>
+        <groupId>com.github.dwslab.melt</groupId>
+        <artifactId>matching-eval</artifactId>
+        <version>master-SNAPSHOT</version>
     </dependency>
 
     <dependency>
