@@ -41,17 +41,19 @@
         <version>${matching.version}</version>
     </dependency> -->
 
-    <dependency>
-        <groupId>com.github.dwslab.melt</groupId>
-        <artifactId>matching-eval</artifactId>
-        <version>master-SNAPSHOT</version>
-    </dependency>
+    
 
-    <dependency>
-        <groupId>de.uni-mannheim.informatik.dws.melt</groupId>
-        <artifactId>matching-eval</artifactId>
-        <version>${matching.version}</version>
-    </dependency>
+	  <dependency>
+	      <groupId>com.github.dwslab.melt</groupId>
+	      <artifactId>matching-eval</artifactId>
+	      <version>melt-3.2</version>
+	  </dependency>
+  
+	  <dependency>
+	      <groupId>com.github.dwslab.melt</groupId>
+	      <artifactId>matching-ml</artifactId>
+	      <version>melt-3.2</version>
+	  </dependency>
 
     <dependency>
       <groupId>junit</groupId>
