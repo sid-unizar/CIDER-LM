@@ -41,12 +41,70 @@
         <version>${matching.version}</version>
     </dependency> -->
 
-    
-
+    <!-- https://github.com/dwslab/melt#developerlatest-version -->
+    <!-- https://jitpack.io/#dwslab/melt/melt-3.2 -->
 	  <dependency>
 	      <groupId>com.github.dwslab.melt</groupId>
 	      <artifactId>matching-eval</artifactId>
 	      <version>melt-3.2</version>
+        <exclusions>
+          <exclusion>
+              <groupId>com.github.haifengl</groupId>
+              <artifactId>smile-core</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>com.github.haifengl</groupId>
+              <artifactId>smile-nlp</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.gradoop.famer</groupId>
+              <artifactId>famer-clustering</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>com.github.universal-automata</groupId>
+              <artifactId>liblevenshtein</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>nz.ac.waikato.cms.weka</groupId>
+              <artifactId>weka-dev</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.mapdb</groupId>
+              <artifactId>mapdb</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>com.github.mpkorstanje</groupId>
+              <artifactId>simmetrics-core</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>edu.mit</groupId>
+              <artifactId>jwi</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>com.babelscape</groupId>
+              <artifactId>babelscape-data-commons</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>net.sf.extjwnl</groupId>
+              <artifactId>extjwnl-data-wn31</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.apache.lucene</groupId>
+              <artifactId>lucene-core</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.apache.lucene</groupId>
+              <artifactId>lucene-queries</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.apache.lucene</groupId>
+              <artifactId>lucene-queryparser</artifactId>
+          </exclusion>
+        </exclusions>
 	  </dependency>
   
 	  <dependency>
@@ -60,6 +118,13 @@
       <artifactId>junit</artifactId>
       <version>4.11</version>
       <scope>test</scope>
+    </dependency>
+
+    <!--logger-->
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>1.7.25</version>
     </dependency>
 
   </dependencies>
