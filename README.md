@@ -3,10 +3,9 @@
 ## Python Virtual Environment
 
 - `conda env create -f ./environment.yml`
-- `conda activate melt`
+- `conda activate melt-python`
 
 ## Execution
 
 - 2 options:
-  - `java -cp target/ciderlm-1.0.jar es.unizar.sid.ciderlm.Main`
-  - `mvn exec:java -Dexec.mainClass="es.unizar.sid.ciderlm.Main"`
+  - `mvn exec:java -Dexec.mainClass="es.unizar.sid.ciderlm.EvaluateDemoPythonMatcher"`

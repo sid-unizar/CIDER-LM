@@ -146,7 +146,7 @@ def match(source_url, target_url, input_alignment_url):
     logging.info("Python matcher info: Match " +
                  source_url + " to " + target_url)
 
-    # modelname = "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50-20220525T163738Z-001/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50"
+    # modelname = "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50"
     modelname = "sentence-transformers/distiluse-base-multilingual-cased-v2"
 
     # TORCH:
