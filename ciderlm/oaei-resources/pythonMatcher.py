@@ -3,8 +3,9 @@ import logging
 import sys
 from rdflib import Graph,  RDFS
 from AlignmentFormat import serialize_mapping_to_tmp_file
-from transformers import AutoTokenizer, AutoModel
+from sentence_transformers import SentenceTransformer, util
 import torch
+from transformers import AutoModel, AutoTokenizer
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
@@ -23,18 +24,7 @@ def mean_pooling(model_output, attention_mask):
     return sum_embeddings / sum_mask
 
 
-def match_transformer(source_graph, target_graph, embeddings_model, tokenizer, input_alignment):
-
-    alignment = []
-    source_uri_list, source_label_list, target_uri_list, target_label_list = [], [], [], []
-
-    # Fill URI-Label lists from both source and target ontologies
-    for s, p, o in source_graph.triples((None, RDFS.label, None)):
-        source_uri_list.append(str(s))
-        source_label_list.append(str(o))
-    for s, p, o in target_graph.triples((None, RDFS.label, None)):
-        target_uri_list.append(str(s))
-        target_label_list.append(str(o))
+def encode_torch(embeddings_model, tokenizer, source_label_list, target_label_list):
 
     # Combine label lists to tokenize jointly
     label_list = source_label_list + target_label_list
@@ -60,6 +50,40 @@ def match_transformer(source_graph, target_graph, embeddings_model, tokenizer, i
         target_embeddings_list = mean_pooling(
             target_embeddings_list, target_encodings_list['attention_mask'])
 
+    return source_embeddings_list, target_embeddings_list
+
+
+def encode_sentence_transformer(embeddings_model, source_label_list, target_label_list):
+
+    source_embeddings_list = embeddings_model.encode(
+        source_label_list, show_progress_bar=False)
+    target_embeddings_list = embeddings_model.encode(
+        target_label_list, show_progress_bar=False)
+
+    return source_embeddings_list, target_embeddings_list
+
+
+def match_sentence_transformer(source_graph, target_graph, embeddings_model, tokenizer):
+
+    alignment = []
+    source_uri_list, source_label_list, target_uri_list, target_label_list = [], [], [], []
+
+    # Fill URI-Label lists from both source and target ontologies
+    for s, p, o in source_graph.triples((None, RDFS.label, None)):
+        source_uri_list.append(str(s))
+        source_label_list.append(str(o))
+    for s, p, o in target_graph.triples((None, RDFS.label, None)):
+        target_uri_list.append(str(s))
+        target_label_list.append(str(o))
+
+    # Obtain embeddings from transformer model
+    # TORCH:
+    # source_embeddings_list, target_embeddings_list = encode_torch(
+    #     embeddings_model, tokenizer, source_label_list, target_label_list)
+    # SENTENCE-TRANSFORMER
+    source_embeddings_list, target_embeddings_list = encode_sentence_transformer(
+        embeddings_model, source_label_list, target_label_list)
+
     # Create URI-Embedding lists
     source_uri_embedding_list = list(
         zip(source_uri_list, source_embeddings_list))
@@ -67,7 +91,10 @@ def match_transformer(source_graph, target_graph, embeddings_model, tokenizer, i
         zip(target_uri_list, target_embeddings_list))
 
     # Use Cosine Similarity to compare sentence embeddings
-    cos = torch.nn.CosineSimilarity()
+    # TORCH:
+    # cos = torch.nn.CosineSimilarity()
+    # SENTENCE-TRANSFORMER
+    cos = util.cos_sim
 
     # Iterate for every pair of source-target ontology instances
     for source_uri, source_sentence_embedding in source_uri_embedding_list:
@@ -81,7 +108,6 @@ def match_transformer(source_graph, target_graph, embeddings_model, tokenizer, i
             confidence = torch.nn.functional.relu(confidence)
             confidence = confidence.unsqueeze(1).item()
 
-            # if confidence > 0.5:
             # Append potential match to alignment
             alignment.append((source_uri, target_uri, "=", confidence))
 
@@ -112,24 +138,6 @@ def hungarian_algorithm(source_graph, target_graph, input_alignment):
     alignment = [(source_uri[source_ind], target_uri[target_ind], "=", confindences_matrix[source_ind,  target_ind])
                  for source_ind, target_ind in zip(source_ind_list, target_ind_list)]
 
-    ''' 
-    bipartite_graph = defaultdict(lambda: defaultdict(None))
-    for match in input_alignment:
-        bipartite_graph[match[0]][match[1]] = match[3]
-    for a in bipartite_graph:
-        bipartite_graph[a] = dict(bipartite_graph[a])
-    bipartite_graph = dict(bipartite_graph)
-
-    # with open("sample.json", "w") as outfile:
-    #     json.dump(bipartite_graph, outfile)
-    # return []
-
-    alignment = algorithm.find_matching(
-        bipartite_graph, matching_type='max', return_type='list')
-    alignment = [(match[0][0], match[0][1], "=", match[1])
-                 for match in alignment] 
-    '''
-
     return alignment
 
 
@@ -138,9 +146,15 @@ def match(source_url, target_url, input_alignment_url):
     logging.info("Python matcher info: Match " +
                  source_url + " to " + target_url)
 
+    # modelname = "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50-20220525T163738Z-001/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50"
     modelname = "sentence-transformers/distiluse-base-multilingual-cased-v2"
-    embeddings_model = AutoModel.from_pretrained(modelname)
-    tokenizer = AutoTokenizer.from_pretrained(modelname)
+
+    # TORCH:
+    # embeddings_model = AutoModel.from_pretrained(modelname)
+    # tokenizer = AutoTokenizer.from_pretrained(modelname)
+    # SENTENCE-TRANSFORMER
+    embeddings_model = SentenceTransformer(modelname)
+    tokenizer = None
 
     # Extract source-target ontologies from URL
     source_graph = Graph()
@@ -150,16 +164,21 @@ def match(source_url, target_url, input_alignment_url):
     target_graph.parse(target_url)
     logging.info("Read target with %s triples.", len(target_graph))
 
-    # TODO input alignment
-    input_alignment = None
-
     # Obtain confindences using transformers model
-    transformers_alignment = match_transformer(
-        source_graph, target_graph, embeddings_model, tokenizer, input_alignment)
+    transformers_alignment = match_sentence_transformer(
+        source_graph, target_graph, embeddings_model, tokenizer)
 
-    # TODO hungarian algorithm
-    resulting_alignment = hungarian_algorithm(
+    # Obtain complete alignment using hungarian algorithm
+    hungarian_alignment = hungarian_algorithm(
         source_graph, target_graph, transformers_alignment)
+
+    resulting_alignment = []
+
+    # Remove matches with low confidence from alignment
+    threshold = 0.5
+    for match in hungarian_alignment:
+        if match[3] > threshold:
+            resulting_alignment.append(match)
 
     # Serialize final alignment to file and return it
     alignment_file_url = serialize_mapping_to_tmp_file(resulting_alignment)
