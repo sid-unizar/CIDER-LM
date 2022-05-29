@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 import sys
-from rdflib import Graph,  RDFS
+from rdflib import Graph, RDFS, URIRef
 from AlignmentFormat import serialize_mapping_to_tmp_file
 from sentence_transformers import SentenceTransformer, util
 import torch
@@ -63,6 +63,54 @@ def encode_sentence_transformer(embeddings_model, source_label_list, target_labe
     return source_embeddings_list, target_embeddings_list
 
 
+def verbalize_sequence_label_children_parents(init_label, children, parents):
+    verbalization = init_label
+    for label in children:
+        if not init_label == label:
+            verbalization = verbalization + ", " + label
+    for label in parents:
+        if not init_label == label:
+            verbalization = verbalization + ", " + label
+
+    return verbalization
+
+
+def verbalize_sequence_pattern(init_label, children, parents):
+    verbalization = init_label
+    for label in children:
+        if not init_label == label:
+            verbalization = verbalization + ", " + label + " is a " + init_label
+    for label in parents:
+        if not init_label == label:
+            verbalization = verbalization + ", " + init_label + " is a " + label
+
+    return verbalization
+
+
+def verbalize_neighbors(graph, uri, init_label):
+
+    uri_ref = URIRef(uri)
+
+    children = []
+    for s, p, o in graph.triples((None, RDFS.subClassOf, uri_ref)):
+        child_labels = [str(o)
+                        for s, p, o in graph.triples((s, RDFS.label, None))]
+        for label in child_labels:
+            children.append(label)
+
+    parents = []
+    for s, p, o in graph.triples((uri_ref, RDFS.subClassOf, None)):
+        parent_labels = [str(o)
+                         for s, p, o in graph.triples((s, RDFS.label, None))]
+        for label in parent_labels:
+            parents.append(label)
+
+    verbalization = verbalize_sequence_pattern(
+        init_label, children, parents)
+
+    return verbalization
+
+
 def match_sentence_transformer(source_graph, target_graph, embeddings_model, tokenizer):
 
     alignment = []
@@ -71,10 +119,14 @@ def match_sentence_transformer(source_graph, target_graph, embeddings_model, tok
     # Fill URI-Label lists from both source and target ontologies
     for s, p, o in source_graph.triples((None, RDFS.label, None)):
         source_uri_list.append(str(s))
-        source_label_list.append(str(o))
+        # verbalization = str(o)
+        verbalization = verbalize_neighbors(source_graph, str(s), str(o))
+        source_label_list.append(verbalization)
     for s, p, o in target_graph.triples((None, RDFS.label, None)):
         target_uri_list.append(str(s))
-        target_label_list.append(str(o))
+        # verbalization = str(o)
+        verbalization = verbalize_neighbors(target_graph, str(s), str(o))
+        target_label_list.append(verbalization)
 
     # Obtain embeddings from transformer model
     # TORCH:

@@ -1,6 +1,7 @@
 rdflib
 owlready2
 sentence-transformers
+transformers
 torch
 torchvision
 torchaudio
