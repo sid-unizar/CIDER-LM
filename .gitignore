@@ -43,3 +43,4 @@ buildNumber.properties
 .classpath
 
 ciderlm/results/
+__pycache__/
