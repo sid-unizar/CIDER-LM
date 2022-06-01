@@ -12,5 +12,6 @@
   - Verbalizing with pattern:
     - In English: "label 'is a' parent, child 'is a' label, ..."
 - Remove matches off alignment using a threshold
+- Use other SBERT models
 - Try other tracks
 - Combine alignments with weights using structure matcher
