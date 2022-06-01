@@ -119,13 +119,13 @@ def match_sentence_transformer(source_graph, target_graph, embeddings_model, tok
     # Fill URI-Label lists from both source and target ontologies
     for s, p, o in source_graph.triples((None, RDFS.label, None)):
         source_uri_list.append(str(s))
-        # verbalization = str(o)
-        verbalization = verbalize_neighbors(source_graph, str(s), str(o))
+        verbalization = str(o)
+        # verbalization = verbalize_neighbors(source_graph, str(s), str(o))
         source_label_list.append(verbalization)
     for s, p, o in target_graph.triples((None, RDFS.label, None)):
         target_uri_list.append(str(s))
-        # verbalization = str(o)
-        verbalization = verbalize_neighbors(target_graph, str(s), str(o))
+        verbalization = str(o)
+        # verbalization = verbalize_neighbors(target_graph, str(s), str(o))
         target_label_list.append(verbalization)
 
     # Obtain embeddings from transformer model
@@ -199,7 +199,11 @@ def match(source_url, target_url, input_alignment_url):
                  source_url + " to " + target_url)
 
     # modelname = "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50"
-    modelname = "sentence-transformers/distiluse-base-multilingual-cased-v2"
+    
+    # modelname = "sentence-transformers/distiluse-base-multilingual-cased-v1" # dbmcv1
+    modelname = "sentence-transformers/distiluse-base-multilingual-cased-v2" # dbmcv2
+    # modelname = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2" # pmmb2
+    # modelname = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # pmml2
 
     # TORCH:
     # embeddings_model = AutoModel.from_pretrained(modelname)
@@ -231,7 +235,7 @@ def match(source_url, target_url, input_alignment_url):
     for match in hungarian_alignment:
         if match[3] > threshold:
             resulting_alignment.append(match)
-
+   
     # Serialize final alignment to file and return it
     alignment_file_url = serialize_mapping_to_tmp_file(resulting_alignment)
     return alignment_file_url
