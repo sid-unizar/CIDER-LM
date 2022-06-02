@@ -43,4 +43,4 @@ buildNumber.properties
 .classpath
 
 ciderlm/results/
-__pycache__/
+ciderlm/oaei-resources/__pycache__/
