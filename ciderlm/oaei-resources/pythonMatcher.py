@@ -65,7 +65,7 @@ def encode_sentence_transformer(embeddings_model, source_label_list, target_labe
     return source_embeddings_list, target_embeddings_list
 
 
-def verbalize_sequence_label_children_parents(init_label, children, parents):
+def verbalize_label_children_parents_sequence(init_label, children, parents):
     verbalization = init_label
     for label in children:
         if not init_label == label:
@@ -77,19 +77,19 @@ def verbalize_sequence_label_children_parents(init_label, children, parents):
     return verbalization
 
 
-def verbalize_sequence_pattern(init_label, children, parents):
+def verbalize_label_children_parents_pattern(init_label, children, parents, pattern):
     verbalization = init_label
     for label in children:
         if not init_label == label:
-            verbalization = verbalization + ", " + label + " is a " + init_label
+            verbalization = verbalization + ", " + label + pattern + init_label
     for label in parents:
         if not init_label == label:
-            verbalization = verbalization + ", " + init_label + " is a " + label
+            verbalization = verbalization + ", " + init_label + pattern + label
 
     return verbalization
 
 
-def verbalize_neighbors(graph, uri, init_label):
+def verbalize_neighbors(graph, uri, init_label, language):
 
     uri_ref = URIRef(uri)
 
@@ -107,10 +107,19 @@ def verbalize_neighbors(graph, uri, init_label):
         for label in parent_labels:
             parents.append(label)
 
-    verbalization = verbalize_sequence_label_children_parents(
-        init_label, children, parents)
+    if language == "en":
+        pattern = " is a "
+    elif language == "es":
+        pattern = " es un "
+    elif language == "fr":
+        pattern = " est un "
+    else:
+        pattern = " is a "
+
+    verbalization = verbalize_label_children_parents_pattern(
+        init_label, children, parents, pattern)
     ''' 
-    verbalization = verbalize_sequence_pattern(
+    verbalization = verbalize_label_children_parents_sequence(
         init_label, children, parents)
     '''
 
@@ -126,12 +135,16 @@ def match_sentence_transformer(source_graph, target_graph, embeddings_model, tok
     for s, p, o in source_graph.triples((None, RDFS.label, None)):
         source_uri_list.append(str(s))
         # verbalization = str(o)
-        verbalization = verbalize_neighbors(source_graph, str(s), str(o))
+        language = o.language
+        verbalization = verbalize_neighbors(
+            source_graph, str(s), str(o), language)
         source_label_list.append(verbalization)
     for s, p, o in target_graph.triples((None, RDFS.label, None)):
         target_uri_list.append(str(s))
         # verbalization = str(o)
-        verbalization = verbalize_neighbors(target_graph, str(s), str(o))
+        language = o.language
+        verbalization = verbalize_neighbors(
+            target_graph, str(s), str(o), language)
         target_label_list.append(verbalization)
 
     # Obtain embeddings from transformer model
