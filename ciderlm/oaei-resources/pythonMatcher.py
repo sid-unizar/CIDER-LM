@@ -131,6 +131,7 @@ def match_sentence_transformer(source_graph, target_graph, embeddings_model, tok
     alignment = []
     source_uri_list, source_label_list, target_uri_list, target_label_list = [], [], [], []
 
+    # TODO check for empty labels
     # Fill URI-Label lists from both source and target ontologies
     for s, p, o in source_graph.triples((None, RDFS.label, None)):
         source_uri_list.append(str(s))
@@ -255,6 +256,7 @@ def match(source_url, target_url, input_alignment_url):
 
     resulting_alignment = []
 
+    # TODO change before hungarian
     # Remove matches with low confidence from alignment
     threshold = 0.5
     for match in hungarian_alignment:

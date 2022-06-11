@@ -6,7 +6,7 @@ The matcher has been developed using **Python**. We use the Maven (Java) framewo
 
 The system obtains the label for every class and property and get a fixed length embedding. This embedding is obtained using **SBERT multilingual model** from the `sentence-transformers`. These models are trained to obtain pooled embeddings so that similar text (more than one token) is close in the embedding space and the text similarity can be computed using the cosine similarity measure.
 
-![](diagrams/cider-lm-architecture.drawio.png)
+![](diagrams/cider-lm-architecture.png)
 
 ## Local Execution (Development)
 
