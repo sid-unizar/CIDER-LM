@@ -34,3 +34,22 @@ Executing `mvn clean install -Djava.net.preferIPv4Stack=true` Python, Java and M
 ## OAEI22
 
 ### Web Docker Container (OAEI22 submission)
+
+
+## License
+
+CIDER-LM is a Language-Model-based system for cross-lingual ontology alignment developed by the SID group (University of Zaragoza). It is inspired by CIDER (Context and Inference basED ontology alignER) but with a completely new underlying technique, design, and implementation. 
+
+>    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+>    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+>    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see [http://www.gnu.org/licenses/].
+
