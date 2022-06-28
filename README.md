@@ -1,6 +1,6 @@
 # CIDER-LM
 
-CIDER-LM is an **ontology matching system** focused on the use of **multilingual transformer models**.
+CIDER-LM is an **ontology matching system** focused on the use of **multilingual transformer models**. It is inspired by CIDER (Context and Inference basED ontology alignER) but with a completely new underlying technique, design, and implementation. 
 
 The matcher has been developed using **Python**. We use the Maven (Java) framework **MELT** to wrap the Python command in a Java class for easier packaging and evaluation of the matching system.
 
@@ -38,7 +38,7 @@ Executing `mvn clean install -Djava.net.preferIPv4Stack=true` Python, Java and M
 
 ## License
 
-CIDER-LM is a Language-Model-based system for cross-lingual ontology alignment developed by the SID group (University of Zaragoza). It is inspired by CIDER (Context and Inference basED ontology alignER) but with a completely new underlying technique, design, and implementation. 
+CIDER-LM is developed by the SID group (University of Zaragoza). 
 
 >    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
