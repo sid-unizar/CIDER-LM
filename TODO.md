@@ -1,17 +1,27 @@
 # TODO
 
-- Fine-tune SBERT
-  - 50-50 positive-negative equivalences
-  - Add more negative
+- Fine-tune SBERT <!-- TODO FIX -->
+  - [x] 50-50 positive-negative equivalences
+  - [x] 10-90 positive-negative equivalences
+  - [ ] Add more negative, ensure they are good and different
 - Separate train, test for fine-tune - testing
-  - Separate ontology wise. Keep 1 ontology for testing, 5 for fine-tune
+  - [x] Separate ontology wise. Keep 2 ontology for testing, 3 for fine-tune
 - Verbalize ontology in labels
   - Sequence:
-    - "label, parent, child, ..."
-    - "parent, label, child, ..."
+    - [x] "label, parent, child, ..."
+    - [x] "parent, label, child, ..."
   - Verbalizing with pattern:
-    - In English: "label 'is a' parent, child 'is a' label, ..."
-- Remove matches off alignment using a threshold
-- Use other SBERT models
-- Try other tracks
-- Combine alignments with weights using structure matcher
+    - [x] In English: "label 'is a' parent, child 'is a' label, ..."
+    - [x] In their corresponding language (fr, es, en): "label 'is a' parent, child 'is a' label, ..."
+      - [ ] Separate data set in languages that patter is translated to evaluate technique
+  - [ ] Verbalize properties with range and domain
+  - [ ] Add disjoint to verbalization 
+- [x] Remove matches off alignment using a threshold
+- [x] Use other SBERT models
+- [ ] Try other OAEI tracks
+- [ ] Combine alignments with weights using structure matcher
+- [ ] Try BERT's `[CLS]`
+- [ ] Evaluate specific languages individually
+- [ ] Apply threshold filter before Hungarian algorithm
+- [ ] Add reasoner
+  - [ ] Change to `owlready2` 

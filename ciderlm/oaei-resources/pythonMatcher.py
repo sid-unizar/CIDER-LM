@@ -1,19 +1,20 @@
 from collections import defaultdict
 import logging
 import sys
-from rdflib import Graph, RDFS, URIRef
+# from rdflib import Graph, RDFS, URIRef
+from owlready2 import get_ontology, IRIS, sync_reasoner
 from AlignmentFormat import serialize_mapping_to_tmp_file
 from sentence_transformers import SentenceTransformer, util
-import torch
+from torch.nn.functional import relu
 # from transformers import AutoModel, AutoTokenizer  # TODO remove unnecesary deps
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 
-''' 
+'''
 # Mean Pooling - Take attention mask into account for correct averaging
 def mean_pooling(model_output, attention_mask):
-	
+
     # First element of model_output contains all token embeddings
     token_embeddings = model_output[0]
     # Use mask to compute pooled embedding
@@ -51,7 +52,7 @@ def encode_torch(embeddings_model, tokenizer, source_label_list, target_label_li
         target_embeddings_list = mean_pooling(
             target_embeddings_list, target_encodings_list['attention_mask'])
 
-    return source_embeddings_list, target_embeddings_list 
+    return source_embeddings_list, target_embeddings_list
 '''
 
 
@@ -89,23 +90,25 @@ def verbalize_label_children_parents_pattern(init_label, children, parents, patt
     return verbalization
 
 
-def verbalize_neighbors(graph, uri, init_label, language):
-
-    uri_ref = URIRef(uri)
+# TODO remove RDFlib
+def verbalize_class_neighbors(onto, iri, init_label, language):
 
     children = []
-    for s, _, _ in graph.triples((None, RDFS.subClassOf, uri_ref)):
-        child_labels = [str(o2)
-                        for _, _, o2 in graph.triples((s, RDFS.label, None))]
-        for label in child_labels:
-            children.append(label)
-
     parents = []
-    for _, _, o in graph.triples((uri_ref, RDFS.subClassOf, None)):
-        parent_labels = [str(o2)
-                         for _, _, o2 in graph.triples((o, RDFS.label, None))]
-        for label in parent_labels:
-            parents.append(label)
+
+    for parent in onto.get_parents_of(IRIS[iri]):
+        try:
+            if len(parent.label) > 0:
+                parents.append(parent.label[0])
+        except AttributeError:
+            continue
+
+    for child in onto.get_children_of(IRIS[iri]):
+        try:
+            if len(child.label) > 0:
+                children.append(child.label[0])
+        except AttributeError:
+            continue
 
     if language == "en":
         pattern = " is a "
@@ -118,7 +121,7 @@ def verbalize_neighbors(graph, uri, init_label, language):
 
     verbalization = verbalize_label_children_parents_pattern(
         init_label, children, parents, pattern)
-    ''' 
+    '''
     verbalization = verbalize_label_children_parents_sequence(
         init_label, children, parents)
     '''
@@ -126,31 +129,53 @@ def verbalize_neighbors(graph, uri, init_label, language):
     return verbalization
 
 
-def match_sentence_transformer(source_graph, target_graph, embeddings_model, tokenizer):
-
-    alignment = []
-    source_uri_list, source_label_list, target_uri_list, target_label_list = [], [], [], []
+def get_iri_label_lists(onto, generator, verbalization_function):
+    iri_list = []
+    label_list = []
 
     # TODO check for empty labels
-    # Fill URI-Label lists from both source and target ontologies
-    for s, p, o in source_graph.triples((None, RDFS.label, None)):
-        source_uri_list.append(str(s))
-        ''' verbalization = str(o) '''
-        language = o.language
-        verbalization = verbalize_neighbors(
-            source_graph, str(s), str(o), language)
-        source_label_list.append(verbalization)
-    for s, p, o in target_graph.triples((None, RDFS.label, None)):
-        target_uri_list.append(str(s))
-        ''' verbalization = str(o) '''
-        language = o.language
-        verbalization = verbalize_neighbors(
-            target_graph, str(s), str(o), language)
-        target_label_list.append(verbalization)
+    for item in generator:
+        if len(item.label) < 1:
+            continue
+        label = item.label[0]
+        language = item.label[0].lang
+        iri = item.iri
+
+        iri_list.append(iri)
+        # verbalization = label
+        verbalization = verbalization_function(onto, iri, label, language)
+        label_list.append(verbalization)
+
+    return iri_list, label_list
+
+
+def match_sentence_transformer(source_onto, target_onto, embeddings_model, tokenizer):
+
+    alignment = []
+
+    # Fill IRI-Label lists from both source and target ontologies
+
+    source_class_iri_list, source_class_label_list = get_iri_label_lists(
+        source_onto, source_onto.classes(), verbalize_class_neighbors)
+
+    target_class_iri_list, target_class_label_list = get_iri_label_lists(
+        target_onto, target_onto.classes(), verbalize_class_neighbors)
+
+    source_properties_iri_list, source_properties_label_list = get_iri_label_lists(
+        source_onto, source_onto.properties(), verbalize_class_neighbors)
+
+    target_properties_iri_list, target_properties_label_list = get_iri_label_lists(
+        target_onto, target_onto.properties(), verbalize_class_neighbors)
+
+    # Combine labels
+    source_iri_list = source_class_iri_list + source_properties_iri_list
+    source_label_list = source_class_label_list + source_properties_label_list
+    target_iri_list = target_class_iri_list + target_properties_iri_list
+    target_label_list = target_class_label_list + target_properties_label_list
 
     # Obtain embeddings from transformer model
     # TORCH:
-    ''' 
+    '''
     source_embeddings_list, target_embeddings_list = encode_torch(
         embeddings_model, tokenizer, source_label_list, target_label_list)
     '''
@@ -158,11 +183,11 @@ def match_sentence_transformer(source_graph, target_graph, embeddings_model, tok
     source_embeddings_list, target_embeddings_list = encode_sentence_transformer(
         embeddings_model, source_label_list, target_label_list)
 
-    # Create URI-Embedding lists
-    source_uri_embedding_list = list(
-        zip(source_uri_list, source_embeddings_list))
-    target_uri_embedding_list = list(
-        zip(target_uri_list, target_embeddings_list))
+    # Create IRI-Embedding lists
+    source_iri_embedding_list = list(
+        zip(source_iri_list, source_embeddings_list))
+    target_iri_embedding_list = list(
+        zip(target_iri_list, target_embeddings_list))
 
     # Use Cosine Similarity to compare sentence embeddings
     # TORCH:
@@ -171,45 +196,49 @@ def match_sentence_transformer(source_graph, target_graph, embeddings_model, tok
     cos = util.cos_sim
 
     # Iterate for every pair of source-target ontology instances
-    for source_uri, source_sentence_embedding in source_uri_embedding_list:
-        for target_uri, target_sentence_embedding in target_uri_embedding_list:
+    for source_iri, source_sentence_embedding in source_iri_embedding_list:
+        for target_iri, target_sentence_embedding in target_iri_embedding_list:
             # Caluculate the cosine similarity for the pair
             confidence = cos(
                 source_sentence_embedding[None, :], target_sentence_embedding[None, :])
             # Cosine Similarity: (-1, +1)
             # Use ReLU to transform the result to (0,+1)
             # CosSim = -1: Labels are oposite meaning, in this case it is not useful information. With ReLU -1 -> 0.
-            confidence = torch.nn.functional.relu(confidence)
+            confidence = relu(confidence)
             confidence = confidence.unsqueeze(1).item()
 
             # Append potential match to alignment
-            alignment.append((source_uri, target_uri, "=", confidence))
+            alignment.append((source_iri, target_iri, "=", confidence))
 
     # Alignment shape: [('http://one.de', 'http://two.de', '=', 1.0), ...]
     return alignment
 
 
-def hungarian_algorithm(source_graph, target_graph, input_alignment):
+def hungarian_algorithm(source_onto, target_onto, input_alignment):
 
-    # Get indexes for URIs
-    source_uri_indexes, target_uri_indexes = defaultdict(int), defaultdict(int)
-    source_uri, target_uri = [], []
-    for i, (s, p, o) in enumerate(source_graph.triples((None, RDFS.label, None))):
-        source_uri_indexes[str(s)] = i
-        source_uri.append(str(s))
-    for i, (s, p, o) in enumerate(target_graph.triples((None, RDFS.label, None))):
-        target_uri_indexes[str(s)] = i
-        target_uri.append(str(s))
+    # Get indexes for IRIs
+    source_iri_indexes, target_iri_indexes = defaultdict(int), defaultdict(int)
+    source_iri, target_iri = [], []
+
+    for i, item in enumerate(list(source_onto.classes())+list(source_onto.properties())):
+        iri = item.iri
+        source_iri_indexes[iri] = i
+        source_iri.append(iri)
+
+    for i, item in enumerate(list(target_onto.classes())+list(target_onto.properties())):
+        iri = item.iri
+        target_iri_indexes[iri] = i
+        target_iri.append(iri)
 
     confindences_matrix = np.empty(
-        (len(source_uri_indexes), len(target_uri_indexes)))
+        (len(source_iri_indexes), len(target_iri_indexes)))
     for match in input_alignment:
-        confindences_matrix[source_uri_indexes[match[0]],
-                            target_uri_indexes[match[1]]] = match[3]
+        confindences_matrix[source_iri_indexes[match[0]],
+                            target_iri_indexes[match[1]]] = match[3]
 
     source_ind_list, target_ind_list = linear_sum_assignment(
         confindences_matrix, maximize=True)
-    alignment = [(source_uri[source_ind], target_uri[target_ind], "=", confindences_matrix[source_ind,  target_ind])
+    alignment = [(source_iri[source_ind], target_iri[target_ind], "=", confindences_matrix[source_ind,  target_ind])
                  for source_ind, target_ind in zip(source_ind_list, target_ind_list)]
 
     return alignment
@@ -230,7 +259,7 @@ def match(source_url, target_url, input_alignment_url):
     # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
 
     # TORCH:
-    ''' 
+    '''
     embeddings_model = AutoModel.from_pretrained(modelname)
     tokenizer = AutoTokenizer.from_pretrained(modelname)
     '''
@@ -239,24 +268,40 @@ def match(source_url, target_url, input_alignment_url):
     tokenizer = None
 
     # Extract source-target ontologies from URL
-    source_graph = Graph()
-    source_graph.parse(source_url)
-    logging.info("Read source with %s triples.", len(source_graph))
-    target_graph = Graph()
-    target_graph.parse(target_url)
-    logging.info("Read target with %s triples.", len(target_graph))
+    source_url = "file://" + source_url[5:]
+    source_onto = get_ontology(source_url).load()
+    logging.info("Read source with %s classes and %s properties.", len(
+        list(source_onto.classes())), len(list(source_onto.properties())))
+    target_url = "file://" + target_url[5:]
+    target_onto = get_ontology(target_url).load()
+    logging.info("Read target with %s classes and %s properties.", len(
+        list(target_onto.classes())), len(list(target_onto.properties())))
+
+    # Use reasoner to find other relations inside ontology
+    ''' with get_ontology("http://www.w3.org/2001/XMLSchema").load():
+       # Habilitar razonador en ambas ontologias
+        with source_onto:
+            sync_reasoner()
+        logging.info("Read source with %s classes and %s properties after reasoning.", len(
+            list(source_onto.classes())), len(list(source_onto.properties())))
+
+        with target_onto:
+            sync_reasoner()
+        logging.info("Read target with %s classes and %s properties after reasoning.", len(
+            list(target_onto.classes())), len(list(target_onto.properties()))) '''
 
     # Obtain confindences using transformers model
     transformers_alignment = match_sentence_transformer(
-        source_graph, target_graph, embeddings_model, tokenizer)
+        source_onto, target_onto, embeddings_model, tokenizer)
+
+    intermidiate_alignment = transformers_alignment
 
     # Obtain complete alignment using hungarian algorithm
     hungarian_alignment = hungarian_algorithm(
-        source_graph, target_graph, transformers_alignment)
-
-    resulting_alignment = []
+        source_onto, target_onto, intermidiate_alignment)
 
     # TODO change before hungarian
+    resulting_alignment = []
     # Remove matches with low confidence from alignment
     threshold = 0.5
     for match in hungarian_alignment:
