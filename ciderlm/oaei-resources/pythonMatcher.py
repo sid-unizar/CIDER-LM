@@ -94,16 +94,16 @@ def verbalize_neighbors(graph, uri, init_label, language):
     uri_ref = URIRef(uri)
 
     children = []
-    for s, p, o in graph.triples((None, RDFS.subClassOf, uri_ref)):
-        child_labels = [str(o)
-                        for s, p, o in graph.triples((s, RDFS.label, None))]
+    for s, _, _ in graph.triples((None, RDFS.subClassOf, uri_ref)):
+        child_labels = [str(o2)
+                        for _, _, o2 in graph.triples((s, RDFS.label, None))]
         for label in child_labels:
             children.append(label)
 
     parents = []
-    for s, p, o in graph.triples((uri_ref, RDFS.subClassOf, None)):
-        parent_labels = [str(o)
-                         for s, p, o in graph.triples((s, RDFS.label, None))]
+    for _, _, o in graph.triples((uri_ref, RDFS.subClassOf, None)):
+        parent_labels = [str(o2)
+                         for _, _, o2 in graph.triples((o, RDFS.label, None))]
         for label in parent_labels:
             parents.append(label)
 
@@ -135,14 +135,14 @@ def match_sentence_transformer(source_graph, target_graph, embeddings_model, tok
     # Fill URI-Label lists from both source and target ontologies
     for s, p, o in source_graph.triples((None, RDFS.label, None)):
         source_uri_list.append(str(s))
-        # verbalization = str(o)
+        ''' verbalization = str(o) '''
         language = o.language
         verbalization = verbalize_neighbors(
             source_graph, str(s), str(o), language)
         source_label_list.append(verbalization)
     for s, p, o in target_graph.triples((None, RDFS.label, None)):
         target_uri_list.append(str(s))
-        # verbalization = str(o)
+        ''' verbalization = str(o) '''
         language = o.language
         verbalization = verbalize_neighbors(
             target_graph, str(s), str(o), language)
