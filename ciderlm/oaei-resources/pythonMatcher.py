@@ -258,6 +258,29 @@ def match(source_url, target_url, input_alignment_url):
     # modelname = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # pmml2
     # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
 
+    # TODO substitute date for dateTimestamp
+    source_filename = source_url[5:]
+    target_filename = target_url[5:]
+
+    logging.info(" <<<<<<<<<<<<<<< source_filename: %s", source_filename)
+    logging.info(" <<<<<<<<<<<<<<< target_filename: %s", target_filename)
+
+    "&xsd;date"
+
+    with open(source_filename, "rt") as f:
+        source_file_content = f.read().replace('http://www.w3.org/2001/XMLSchema#date',
+                                               'http://www.w3.org/2001/XMLSchema#dateTime').replace('&xsd;date', '&xsd;dateTime')
+
+    with open(source_filename, "w") as f:
+        f.write(source_file_content)
+
+    with open(target_filename, "rt") as f:
+        target_file_content = f.read().replace('http://www.w3.org/2001/XMLSchema#date',
+                                               'http://www.w3.org/2001/XMLSchema#dateTime').replace("&xsd;date", '&xsd;dateTime')
+
+    with open(target_filename, "wt") as f:
+        f.write(target_file_content)
+
     # TORCH:
     '''
     embeddings_model = AutoModel.from_pretrained(modelname)
@@ -278,17 +301,15 @@ def match(source_url, target_url, input_alignment_url):
         list(target_onto.classes())), len(list(target_onto.properties())))
 
     # Use reasoner to find other relations inside ontology
-    ''' with get_ontology("http://www.w3.org/2001/XMLSchema").load():
-       # Habilitar razonador en ambas ontologias
-        with source_onto:
-            sync_reasoner()
-        logging.info("Read source with %s classes and %s properties after reasoning.", len(
-            list(source_onto.classes())), len(list(source_onto.properties())))
+    with source_onto:
+        sync_reasoner()
+    logging.info("Read source with %s classes and %s properties after reasoning.", len(
+        list(source_onto.classes())), len(list(source_onto.properties())))
 
-        with target_onto:
-            sync_reasoner()
-        logging.info("Read target with %s classes and %s properties after reasoning.", len(
-            list(target_onto.classes())), len(list(target_onto.properties()))) '''
+    with target_onto:
+        sync_reasoner()
+    logging.info("Read target with %s classes and %s properties after reasoning.", len(
+        list(target_onto.classes())), len(list(target_onto.properties())))
 
     # Obtain confindences using transformers model
     transformers_alignment = match_sentence_transformer(
