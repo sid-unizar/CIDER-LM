@@ -11,6 +11,27 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 
+modelname_list = [
+    # 0. finetuned 50-50 :
+    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50",
+    # 1. finetuned 10-90 :
+    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_10-90",
+    # 2. dbmcv1 :
+    "sentence-transformers/distiluse-base-multilingual-cased-v1",
+    # 3. dbmcv2 (BEST) :
+    "sentence-transformers/distiluse-base-multilingual-cased-v2",
+    # 4. pmmb2 :
+    "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+    # 5. pmml2 :
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    # 6. pxrmv1 :
+    "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
+]
+
+# TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
+modelname = modelname_list[3]
+threshold = 0.5
+
 '''
 # Mean Pooling - Take attention mask into account for correct averaging
 def mean_pooling(model_output, attention_mask):
@@ -78,7 +99,17 @@ def verbalize_label_children_parents_sequence(init_label, children, parents):
     return verbalization
 
 
-def verbalize_label_children_parents_pattern(init_label, children, parents, pattern):
+def verbalize_label_children_parents_pattern(init_label, children, parents, language):
+
+    if language == "en":
+        pattern = " is a "
+    elif language == "es":
+        pattern = " es un "
+    elif language == "fr":
+        pattern = " est un "
+    else:
+        pattern = " is a "
+
     verbalization = init_label
     for label in children:
         if not init_label == label:
@@ -110,17 +141,8 @@ def verbalize_class_neighbors(onto, iri, init_label, language):
         except AttributeError:
             continue
 
-    if language == "en":
-        pattern = " is a "
-    elif language == "es":
-        pattern = " es un "
-    elif language == "fr":
-        pattern = " est un "
-    else:
-        pattern = " is a "
-
     verbalization = verbalize_label_children_parents_pattern(
-        init_label, children, parents, pattern)
+        init_label, children, parents, language)
     '''
     verbalization = verbalize_label_children_parents_sequence(
         init_label, children, parents)
@@ -142,7 +164,7 @@ def get_iri_label_lists(onto, generator, verbalization_function):
         iri = item.iri
 
         iri_list.append(iri)
-        # verbalization = label
+        ''' verbalization = label '''
         verbalization = verbalization_function(onto, iri, label, language)
         label_list.append(verbalization)
 
@@ -249,21 +271,10 @@ def match(source_url, target_url, input_alignment_url):
     logging.info("Python matcher info: Match " +
                  source_url + " to " + target_url)
 
-    # modelname = "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50"
-    # modelname = "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_10-90"
-
-    # modelname = "sentence-transformers/distiluse-base-multilingual-cased-v1" # dbmcv1
-    modelname = "sentence-transformers/distiluse-base-multilingual-cased-v2"  # dbmcv2, BEST
-    # modelname = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2" # pmmb2
-    # modelname = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # pmml2
-    # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
-
-    # TODO substitute date for dateTimestamp
+    ''' 
+    # Substitute date for dateTime to allow OWL 2.0 reasoning
     source_filename = source_url[5:]
     target_filename = target_url[5:]
-
-    logging.info(" <<<<<<<<<<<<<<< source_filename: %s", source_filename)
-    logging.info(" <<<<<<<<<<<<<<< target_filename: %s", target_filename)
 
     "&xsd;date"
 
@@ -279,7 +290,8 @@ def match(source_url, target_url, input_alignment_url):
                                                'http://www.w3.org/2001/XMLSchema#dateTime').replace("&xsd;date", '&xsd;dateTime')
 
     with open(target_filename, "wt") as f:
-        f.write(target_file_content)
+        f.write(target_file_content) 
+    '''
 
     # TORCH:
     '''
@@ -300,6 +312,7 @@ def match(source_url, target_url, input_alignment_url):
     logging.info("Read target with %s classes and %s properties.", len(
         list(target_onto.classes())), len(list(target_onto.properties())))
 
+    ''' 
     # Use reasoner to find other relations inside ontology
     with source_onto:
         sync_reasoner()
@@ -310,6 +323,7 @@ def match(source_url, target_url, input_alignment_url):
         sync_reasoner()
     logging.info("Read target with %s classes and %s properties after reasoning.", len(
         list(target_onto.classes())), len(list(target_onto.properties())))
+    '''
 
     # Obtain confindences using transformers model
     transformers_alignment = match_sentence_transformer(
@@ -324,7 +338,6 @@ def match(source_url, target_url, input_alignment_url):
     # TODO change before hungarian
     resulting_alignment = []
     # Remove matches with low confidence from alignment
-    threshold = 0.5
     for match in hungarian_alignment:
         if match[3] > threshold:
             resulting_alignment.append(match)
