@@ -24,6 +24,7 @@ public class EvaluateDemoPythonMatcher {
         // TODO parameter?\
         
         ExecutionResultSet result = Executor.run(TrackRepository.Multifarm.ALL_IN_ONE_TRACK, new Main());
+        // TODO ExecutionResultSet result = Executor.run(TrackRepository.Conference.V1, new Main()); // Different track
         ExecutionResult r = result.iterator().next();
         LOGGER.info("Python matcher run returned {} correspondences.", r.getSystemAlignment().size());
         EvaluatorCSV evaluatorCSV = new EvaluatorCSV(result);
