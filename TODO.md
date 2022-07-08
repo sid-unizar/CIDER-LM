@@ -15,7 +15,7 @@
     - [x] In their corresponding language (fr, es, en): "label 'is a' parent, child 'is a' label, ..."
       - [ ] Separate data set in languages that patter is translated to evaluate technique
   - [ ] Verbalize properties with range and domain
-  - [ ] Add disjoint to verbalization 
+  - [ ] Add disjoint to verbalization
 - [x] Remove matches off alignment using a threshold
 - [x] Use other SBERT models
 - [ ] Try other OAEI tracks
@@ -24,4 +24,7 @@
 - [ ] Evaluate specific languages individually
 - [ ] Apply threshold filter before Hungarian algorithm
 - [ ] Add reasoner
-  - [ ] Change to `owlready2` 
+  - [ ] Change to `owlready2`
+- [ ] Parametrize every execution option
+- [X] Allow reasoning changing 'date' property
+  - [ ] Change strings to variables
