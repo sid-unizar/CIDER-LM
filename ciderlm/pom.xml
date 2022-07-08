@@ -73,13 +73,15 @@
                             <build>
                                 <from>python</from><!-- docker base image - Debian 11 with Python 3.10.4 -->
                                 <runCmds>
-                                    <run>pip install -U rdflib</run><!-- install all python dependencies -->
+                                    <!-- install all python dependencies -->
                                     <run>pip install -U owlready2</run>
                                     <run>pip install -U torch</run>
                                     <run>pip install -U sentence-transformers</run>
                                     <run>pip install -U scipy</run>
+                                    <run>pip install -U numpy</run>
+                                    <!-- install java -->
                                     <run>apt-get update</run>
-                                    <run>apt-get -y install openjdk-11-jre</run><!-- install java -->
+                                    <run>apt-get -y install openjdk-11-jre</run>
                                 </runCmds>
                                 <assembly><descriptorRef>web</descriptorRef></assembly>
                                 <cmd><shell>java -cp "${project.build.finalName}.${project.packaging}:lib/*" de.uni_mannheim.informatik.dws.melt.receiver_http.Main</shell></cmd>
