@@ -43,5 +43,6 @@ buildNumber.properties
 .classpath
 
 ciderlm/results/
+ciderlm/results-prev/
 ciderlm/oaei-resources/__pycache__/
 melt-maven-matching-ml.md
