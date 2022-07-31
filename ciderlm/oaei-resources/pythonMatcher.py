@@ -25,12 +25,24 @@ modelname_list = [
     # 5. pmml2 :
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     # 6. pxrmv1 :
-    "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
+    "sentence-transformers/paraphrase-xlm-r-multilingual-v1",
+    # 7. finetuned 50-50 2-3-train pattern_en-fr-es
+    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_oaei_final_pattern_en-fr-es",
+    # 8. finetuned 50-50 conference-iasted_pattern
+    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_pattern_en_oaei_final"
 ]
 
 # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
-modelname = modelname_list[3]
+reasoner = True
+modelname = modelname_list[8]
 threshold = 0.5
+
+# 0. Label
+# 1. Verbalize classes children, parents (with sequence)
+# 2. Verbalize classes children, parents (with pattern)
+# 3. Verbalize classes children, parents (with pattern en-fr-es)
+# TODO 4. Verbalize properties domain and range
+verbalization_function = 1
 
 '''
 # Mean Pooling - Take attention mask into account for correct averaging
@@ -101,14 +113,17 @@ def verbalize_label_children_parents_sequence(init_label, children, parents):
 
 def verbalize_label_children_parents_pattern(init_label, children, parents, language):
 
-    if language == "en":
+    if verbalization_function == 2:
         pattern = " is a "
-    elif language == "es":
-        pattern = " es un "
-    elif language == "fr":
-        pattern = " est un "
-    else:
-        pattern = " is a "
+    elif verbalization_function == 3:
+        if language == "en":
+            pattern = " is a "
+        elif language == "es":
+            pattern = " es un "
+        elif language == "fr":
+            pattern = " est un "
+        else:
+            pattern = " is a "
 
     verbalization = init_label
     for label in children:
@@ -121,7 +136,6 @@ def verbalize_label_children_parents_pattern(init_label, children, parents, lang
     return verbalization
 
 
-# TODO remove RDFlib
 def verbalize_class_neighbors(onto, iri, init_label, language):
 
     children = []
@@ -141,21 +155,47 @@ def verbalize_class_neighbors(onto, iri, init_label, language):
         except AttributeError:
             continue
 
-    verbalization = verbalize_label_children_parents_pattern(
-        init_label, children, parents, language)
-    '''
-    verbalization = verbalize_label_children_parents_sequence(
-        init_label, children, parents)
-    '''
+    if verbalization_function == 1:
+        verbalization = verbalize_label_children_parents_sequence(
+            init_label, children, parents)
+    elif verbalization_function == 2 or verbalization_function == 3:
+        verbalization = verbalize_label_children_parents_pattern(
+            init_label, children, parents, language)
 
     return verbalization
 
 
-def get_iri_label_lists(onto, generator, verbalization_function):
+def verbalize_property(iri, init_label):
+
+    domains = []
+    ranges = []
+
+    for domain in IRIS[iri].domain:
+        try:
+            if len(domain.label) > 0:
+                domains.append(domain.label[0])
+        except AttributeError:
+            continue
+
+    for range in IRIS[iri].range:
+        try:
+            if len(range.label) > 0:
+                ranges.append(range.label[0])
+        except AttributeError:
+            continue
+
+    verbalization = verbalize_label_children_parents_sequence(
+        init_label, domains, ranges)
+
+    logging.info(verbalization)
+
+    return verbalization
+
+
+def get_iri_label_lists(onto, generator, isClass=False, isProperty=False):
     iri_list = []
     label_list = []
 
-    # TODO check for empty labels
     for item in generator:
         if len(item.label) < 1:
             continue
@@ -164,8 +204,16 @@ def get_iri_label_lists(onto, generator, verbalization_function):
         iri = item.iri
 
         iri_list.append(iri)
-        ''' verbalization = label '''
-        verbalization = verbalization_function(onto, iri, label, language)
+
+        if verbalization_function == 0:
+            verbalization = label
+        elif verbalization_function > 0:
+            if isClass:
+                verbalization = verbalize_class_neighbors(
+                    onto, iri, label, language)
+            elif isProperty:
+                verbalization = verbalize_property(iri, label)
+
         label_list.append(verbalization)
 
     return iri_list, label_list
@@ -178,16 +226,16 @@ def match_sentence_transformer(source_onto, target_onto, embeddings_model, token
     # Fill IRI-Label lists from both source and target ontologies
 
     source_class_iri_list, source_class_label_list = get_iri_label_lists(
-        source_onto, source_onto.classes(), verbalize_class_neighbors)
+        source_onto, source_onto.classes(), isClass=True)
 
     target_class_iri_list, target_class_label_list = get_iri_label_lists(
-        target_onto, target_onto.classes(), verbalize_class_neighbors)
+        target_onto, target_onto.classes(), isClass=True)
 
     source_properties_iri_list, source_properties_label_list = get_iri_label_lists(
-        source_onto, source_onto.properties(), verbalize_class_neighbors)
+        source_onto, source_onto.properties(), isProperty=True)
 
     target_properties_iri_list, target_properties_label_list = get_iri_label_lists(
-        target_onto, target_onto.properties(), verbalize_class_neighbors)
+        target_onto, target_onto.properties(), isProperty=True)
 
     # Combine labels
     source_iri_list = source_class_iri_list + source_properties_iri_list
@@ -266,32 +314,47 @@ def hungarian_algorithm(source_onto, target_onto, input_alignment):
     return alignment
 
 
+def replaceDateForDateTime(fileName):
+    # Substitute date for dateTime to allow OWL 2.0 reasoning
+
+    sDateShort = '&xsd;date'
+    sDateTimeShort = '&xsd;dateTime'
+    sDateLong = 'http://www.w3.org/2001/XMLSchema#date'
+    sDateTimeLong = 'http://www.w3.org/2001/XMLSchema#dateTime'
+
+    with open(fileName, "rt") as f:
+        file_content = f.read().replace(
+            sDateLong, sDateTimeLong).replace(sDateShort, sDateTimeShort)
+
+    with open(fileName, "w") as f:
+        f.write(file_content)
+
+
+def replaceDateTimeForDate(fileName):
+    # Substitute date for dateTime to allow OWL 2.0 reasoning
+
+    sDateShort = '&xsd;date'
+    sDateTimeShort = '&xsd;dateTime'
+    sDateLong = 'http://www.w3.org/2001/XMLSchema#date'
+    sDateTimeLong = 'http://www.w3.org/2001/XMLSchema#dateTime'
+
+    with open(fileName, "rt") as f:
+        file_content = f.read().replace(
+            sDateTimeLong, sDateLong).replace(sDateTimeShort, sDateShort)
+
+    with open(fileName, "w") as f:
+        f.write(file_content)
+
+
 def match(source_url, target_url, input_alignment_url):
 
     logging.info("Python matcher info: Match " +
                  source_url + " to " + target_url)
 
-    ''' 
-    # Substitute date for dateTime to allow OWL 2.0 reasoning
-    source_filename = source_url[5:]
-    target_filename = target_url[5:]
-
-    "&xsd;date"
-
-    with open(source_filename, "rt") as f:
-        source_file_content = f.read().replace('http://www.w3.org/2001/XMLSchema#date',
-                                               'http://www.w3.org/2001/XMLSchema#dateTime').replace('&xsd;date', '&xsd;dateTime')
-
-    with open(source_filename, "w") as f:
-        f.write(source_file_content)
-
-    with open(target_filename, "rt") as f:
-        target_file_content = f.read().replace('http://www.w3.org/2001/XMLSchema#date',
-                                               'http://www.w3.org/2001/XMLSchema#dateTime').replace("&xsd;date", '&xsd;dateTime')
-
-    with open(target_filename, "wt") as f:
-        f.write(target_file_content) 
-    '''
+    if reasoner:
+        # Substitute date for dateTime to allow OWL 2.0 reasoning
+        replaceDateForDateTime(source_url[5:])
+        replaceDateForDateTime(target_url[5:])
 
     # TORCH:
     '''
@@ -312,18 +375,22 @@ def match(source_url, target_url, input_alignment_url):
     logging.info("Read target with %s classes and %s properties.", len(
         list(target_onto.classes())), len(list(target_onto.properties())))
 
-    ''' 
-    # Use reasoner to find other relations inside ontology
-    with source_onto:
-        sync_reasoner()
-    logging.info("Read source with %s classes and %s properties after reasoning.", len(
-        list(source_onto.classes())), len(list(source_onto.properties())))
+    if reasoner:
+        # Substitute date for dateTime to allow OWL 2.0 reasoning
+        replaceDateTimeForDate(source_url[5:])
+        replaceDateTimeForDate(target_url[5:])
 
-    with target_onto:
-        sync_reasoner()
-    logging.info("Read target with %s classes and %s properties after reasoning.", len(
-        list(target_onto.classes())), len(list(target_onto.properties())))
-    '''
+    if reasoner:
+        # Use reasoner to find other relations inside ontology
+        with source_onto:
+            sync_reasoner()
+        logging.info("Read source with %s classes and %s properties after reasoning.", len(
+            list(source_onto.classes())), len(list(source_onto.properties())))
+
+        with target_onto:
+            sync_reasoner()
+        logging.info("Read target with %s classes and %s properties after reasoning.", len(
+            list(target_onto.classes())), len(list(target_onto.properties())))
 
     # Obtain confindences using transformers model
     transformers_alignment = match_sentence_transformer(
@@ -335,7 +402,6 @@ def match(source_url, target_url, input_alignment_url):
     hungarian_alignment = hungarian_algorithm(
         source_onto, target_onto, intermidiate_alignment)
 
-    # TODO change before hungarian
     resulting_alignment = []
     # Remove matches with low confidence from alignment
     for match in hungarian_alignment:
