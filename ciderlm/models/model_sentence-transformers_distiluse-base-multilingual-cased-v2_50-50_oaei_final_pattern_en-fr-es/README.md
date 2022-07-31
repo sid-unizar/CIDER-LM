@@ -4,6 +4,7 @@ tags:
 - sentence-transformers
 - feature-extraction
 - sentence-similarity
+
 ---
 
 # {MODEL_NAME}
@@ -45,9 +46,9 @@ The model was trained with the parameters:
 
 **DataLoader**:
 
-`torch.utils.data.dataloader.DataLoader` of length 2334 with parameters:
+`torch.utils.data.dataloader.DataLoader` of length 512 with parameters:
 ```
-{'batch_size': 16, 'sampler': 'torch.utils.data.sampler.RandomSampler', 'batch_sampler': 'torch.utils.data.sampler.BatchSampler'}
+{'batch_size': 64, 'sampler': 'torch.utils.data.sampler.RandomSampler', 'batch_sampler': 'torch.utils.data.sampler.BatchSampler'}
 ```
 
 **Loss**:
@@ -58,16 +59,16 @@ Parameters of the fit()-Method:
 ```
 {
     "epochs": 4,
-    "evaluation_steps": 1000,
-    "evaluator": "sentence_transformers.evaluation.EmbeddingSimilarityEvaluator.EmbeddingSimilarityEvaluator",
+    "evaluation_steps": 100,
+    "evaluator": "sentence_transformers.evaluation.BinaryClassificationEvaluator.BinaryClassificationEvaluator",
     "max_grad_norm": 1,
-    "optimizer_class": "<class 'transformers.optimization.AdamW'>",
+    "optimizer_class": "<class 'torch.optim.adamw.AdamW'>",
     "optimizer_params": {
         "lr": 2e-05
     },
     "scheduler": "WarmupLinear",
     "steps_per_epoch": null,
-    "warmup_steps": 934,
+    "warmup_steps": 205,
     "weight_decay": 0.01
 }
 ```
