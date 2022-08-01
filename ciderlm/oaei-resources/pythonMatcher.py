@@ -13,9 +13,9 @@ from scipy.optimize import linear_sum_assignment
 
 modelname_list = [
     # 0. finetuned 50-50 :
-    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50",
+    "models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50",
     # 1. finetuned 10-90 :
-    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_10-90",
+    "models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_10-90",
     # 2. dbmcv1 :
     "sentence-transformers/distiluse-base-multilingual-cased-v1",
     # 3. dbmcv2 (BEST) :
@@ -28,20 +28,19 @@ modelname_list = [
     "sentence-transformers/paraphrase-xlm-r-multilingual-v1",
     # 7. finetuned 50-50 2-3-train pattern_en-fr-es
     "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_oaei_final_pattern_en-fr-es",
-    # 8. finetuned 50-50 conference-iasted_pattern
-    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_pattern_en_oaei_final"
+    # 8. finetuned 50-50 cmt-conference-iasted sequence
+    "./models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_sequence_oaei_final/"
 ]
 
 # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
-reasoner = True
 modelname = modelname_list[8]
-threshold = 0.5
+reasoner = False
+threshold = 0.45
 
 # 0. Label
-# 1. Verbalize classes children, parents (with sequence)
-# 2. Verbalize classes children, parents (with pattern)
-# 3. Verbalize classes children, parents (with pattern en-fr-es)
-# TODO 4. Verbalize properties domain and range
+# 1. Verbalize classes (children, parents) and properties (domain, range) (with sequence)
+# 2. Verbalize classes (children, parents) and properties (domain, range) (with pattern)
+# 3. Verbalize classes (children, parents) and properties (domain, range) (with pattern en-fr-es)
 verbalization_function = 1
 
 '''
@@ -99,19 +98,19 @@ def encode_sentence_transformer(embeddings_model, source_label_list, target_labe
     return source_embeddings_list, target_embeddings_list
 
 
-def verbalize_label_children_parents_sequence(init_label, children, parents):
+def verbalize_label_sequence(init_label, list_neighbors_one, list_neighbors_two):
     verbalization = init_label
-    for label in children:
+    for label in list_neighbors_one:
         if not init_label == label:
             verbalization = verbalization + ", " + label
-    for label in parents:
+    for label in list_neighbors_two:
         if not init_label == label:
             verbalization = verbalization + ", " + label
 
     return verbalization
 
 
-def verbalize_label_children_parents_pattern(init_label, children, parents, language):
+def verbalize_label_pattern_class(init_label, children, parents, language):
 
     if verbalization_function == 2:
         pattern = " is a "
@@ -136,58 +135,76 @@ def verbalize_label_children_parents_pattern(init_label, children, parents, lang
     return verbalization
 
 
-def verbalize_class_neighbors(onto, iri, init_label, language):
+def verbalize_label_pattern_property(init_label, domains, ranges, language):
 
-    children = []
-    parents = []
+    pattern_domain = " has domain "
+    pattern_range = " has range "
 
-    for parent in onto.get_parents_of(IRIS[iri]):
-        try:
-            if len(parent.label) > 0:
-                parents.append(parent.label[0])
-        except AttributeError:
-            continue
-
-    for child in onto.get_children_of(IRIS[iri]):
-        try:
-            if len(child.label) > 0:
-                children.append(child.label[0])
-        except AttributeError:
-            continue
-
-    if verbalization_function == 1:
-        verbalization = verbalize_label_children_parents_sequence(
-            init_label, children, parents)
-    elif verbalization_function == 2 or verbalization_function == 3:
-        verbalization = verbalize_label_children_parents_pattern(
-            init_label, children, parents, language)
+    verbalization = init_label
+    for label in domains:
+        if not init_label == label:
+            verbalization = verbalization + ", " + init_label + pattern_domain + label
+    for label in ranges:
+        if not init_label == label:
+            verbalization = verbalization + ", " + init_label + pattern_range + label
 
     return verbalization
 
 
-def verbalize_property(iri, init_label):
+def verbalize_neighbors(onto, iri, init_label, language, isClass=False, isProperty=False):
 
-    domains = []
-    ranges = []
+    if isClass:
+        children = []
+        parents = []
 
-    for domain in IRIS[iri].domain:
-        try:
-            if len(domain.label) > 0:
-                domains.append(domain.label[0])
-        except AttributeError:
-            continue
+        for parent in onto.get_parents_of(IRIS[iri]):
+            try:
+                if len(parent.label) > 0:
+                    parents.append(parent.label[0])
+            except AttributeError:
+                continue
 
-    for range in IRIS[iri].range:
-        try:
-            if len(range.label) > 0:
-                ranges.append(range.label[0])
-        except AttributeError:
-            continue
+        for child in onto.get_children_of(IRIS[iri]):
+            try:
+                if len(child.label) > 0:
+                    children.append(child.label[0])
+            except AttributeError:
+                continue
 
-    verbalization = verbalize_label_children_parents_sequence(
-        init_label, domains, ranges)
+        list_neighbors_one = children
+        list_neighbors_two = parents
 
-    logging.info(verbalization)
+    elif isProperty:
+        domains = []
+        ranges = []
+
+        for domain in IRIS[iri].domain:
+            try:
+                if len(domain.label) > 0:
+                    domains.append(domain.label[0])
+            except AttributeError:
+                continue
+
+        for range in IRIS[iri].range:
+            try:
+                if len(range.label) > 0:
+                    ranges.append(range.label[0])
+            except AttributeError:
+                continue
+
+        list_neighbors_one = domains
+        list_neighbors_two = ranges
+
+    if verbalization_function == 1:
+        verbalization = verbalize_label_sequence(
+            init_label, list_neighbors_one, list_neighbors_two)
+    elif verbalization_function == 2 or verbalization_function == 3:
+        if isClass:
+            verbalization = verbalize_label_pattern_class(
+                init_label, list_neighbors_one, list_neighbors_two, language)
+        elif isProperty:
+            verbalization = verbalize_label_pattern_property(
+                init_label, list_neighbors_one, list_neighbors_two, language)
 
     return verbalization
 
@@ -208,11 +225,8 @@ def get_iri_label_lists(onto, generator, isClass=False, isProperty=False):
         if verbalization_function == 0:
             verbalization = label
         elif verbalization_function > 0:
-            if isClass:
-                verbalization = verbalize_class_neighbors(
-                    onto, iri, label, language)
-            elif isProperty:
-                verbalization = verbalize_property(iri, label)
+            verbalization = verbalize_neighbors(
+                onto, iri, label, language, isClass, isProperty)
 
         label_list.append(verbalization)
 
