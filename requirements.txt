@@ -2,3 +2,5 @@ owlready2
 sentence-transformers
 torch
 scipy
+numpy
+six
