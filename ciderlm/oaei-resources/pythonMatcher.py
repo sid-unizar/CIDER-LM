@@ -13,9 +13,9 @@ from scipy.optimize import linear_sum_assignment
 
 modelname_list = [
     # 0. finetuned 50-50 :
-    "models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50",
+    "oaei-resources/models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50",
     # 1. finetuned 10-90 :
-    "models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_10-90",
+    "oaei-resources/models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_10-90",
     # 2. dbmcv1 :
     "sentence-transformers/distiluse-base-multilingual-cased-v1",
     # 3. dbmcv2 (BEST) :
@@ -27,21 +27,23 @@ modelname_list = [
     # 6. pxrmv1 :
     "sentence-transformers/paraphrase-xlm-r-multilingual-v1",
     # 7. finetuned 50-50 2-3-train pattern_en-fr-es
-    "models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_oaei_final_pattern_en-fr-es",
-    # 8. finetuned 50-50 cmt-conference-iasted sequence
-    "./models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_sequence_oaei_final/"
+    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_oaei_final_pattern_en-fr-es",
+    # 8. finetuned 50-50 cmt-conference-iasted sequence (class + property)
+    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_sequence_oaei_final/",
+    # 9. finetuned 50-50 cmt-conference-iasted pattern_en (class + property)
+    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_pattern_en_oaei_final"
 ]
 
 # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
-modelname = modelname_list[8]
-reasoner = False
-threshold = 0.45
+modelname = modelname_list[3]
+reasoner = True
+threshold = 0.5
 
 # 0. Label
 # 1. Verbalize classes (children, parents) and properties (domain, range) (with sequence)
 # 2. Verbalize classes (children, parents) and properties (domain, range) (with pattern)
 # 3. Verbalize classes (children, parents) and properties (domain, range) (with pattern en-fr-es)
-verbalization_function = 1
+verbalization_function = 0
 
 '''
 # Mean Pooling - Take attention mask into account for correct averaging
