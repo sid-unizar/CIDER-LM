@@ -47,6 +47,7 @@ ciderlm/results-prev/
 results-aggregated-pre
 ciderlm/oaei-resources/__pycache__/
 melt-maven-matching-ml.md
-ciderlm/models-pre/
-ciderlm/models/
+docker.md
+ciderlm/oaei-resources/models-pre/
+ciderlm/oaei-resources/models/
 .gitattributes
