@@ -31,12 +31,16 @@ modelname_list = [
     # 8. finetuned 50-50 cmt-conference-iasted sequence (class + property)
     "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_sequence_oaei_final/",
     # 9. finetuned 50-50 cmt-conference-iasted pattern_en (class + property)
-    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_pattern_en_oaei_final"
+    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_pattern_en_oaei_final",
+    # 10. finetuned 50-50 all-v2 sequence
+    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_sequence_oaei_final",
+    # 11. finetuned 50-50 all-v2 pattern_en
+    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_pattern_en_oaei_final",
 ]
 
 # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
-modelname = modelname_list[3]
-reasoner = True
+modelname = modelname_list[10]
+reasoner = False
 threshold = 0.5
 
 # 0. Label
@@ -44,50 +48,6 @@ threshold = 0.5
 # 2. Verbalize classes (children, parents) and properties (domain, range) (with pattern)
 # 3. Verbalize classes (children, parents) and properties (domain, range) (with pattern en-fr-es)
 verbalization_function = 0
-
-'''
-# Mean Pooling - Take attention mask into account for correct averaging
-def mean_pooling(model_output, attention_mask):
-
-    # First element of model_output contains all token embeddings
-    token_embeddings = model_output[0]
-    # Use mask to compute pooled embedding
-    input_mask_expanded = attention_mask.unsqueeze(
-        -1).expand(token_embeddings.size()).float()
-    sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
-    sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-
-    return sum_embeddings / sum_mask
-
-
-def encode_torch(embeddings_model, tokenizer, source_label_list, target_label_list):
-
-    # Combine label lists to tokenize jointly
-    label_list = source_label_list + target_label_list
-    encodings_list = tokenizer(
-        label_list,
-        add_special_tokens=True,
-        padding=True,
-        return_tensors="pt"
-    )
-
-    # Separate the encoding lists, accordingly with the label lists
-    source_encodings_list = {'input_ids': encodings_list['input_ids'][:len(
-        source_label_list)], 'attention_mask': encodings_list['attention_mask'][:len(source_label_list)]}
-    target_encodings_list = {'input_ids': encodings_list['input_ids'][len(
-        source_label_list):], 'attention_mask': encodings_list['attention_mask'][len(source_label_list):]}
-
-    # Calculate token embeddings from tokenizer encodings and perform mean pooling to obtain a sentence embedding per label
-    with torch.no_grad():
-        source_embeddings_list = embeddings_model(**source_encodings_list)
-        source_embeddings_list = mean_pooling(
-            source_embeddings_list, source_encodings_list['attention_mask'])
-        target_embeddings_list = embeddings_model(**target_encodings_list)
-        target_embeddings_list = mean_pooling(
-            target_embeddings_list, target_encodings_list['attention_mask'])
-
-    return source_embeddings_list, target_embeddings_list
-'''
 
 
 def encode_sentence_transformer(embeddings_model, source_label_list, target_label_list):
