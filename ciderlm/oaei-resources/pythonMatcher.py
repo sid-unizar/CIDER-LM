@@ -40,7 +40,7 @@ modelname_list = [
 
 # TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
 modelname = modelname_list[10]
-reasoner = False
+reasoner = True
 threshold = 0.5
 
 # 0. Label
