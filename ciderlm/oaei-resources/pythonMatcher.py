@@ -10,36 +10,7 @@ from torch.nn.functional import relu
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-
-modelname_list = [
-    # 0. finetuned 50-50 :
-    "oaei-resources/models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50",
-    # 1. finetuned 10-90 :
-    "oaei-resources/models-pre/model_sentence-transformers_distiluse-base-multilingual-cased-v2_10-90",
-    # 2. dbmcv1 :
-    "sentence-transformers/distiluse-base-multilingual-cased-v1",
-    # 3. dbmcv2 (BEST) :
-    "sentence-transformers/distiluse-base-multilingual-cased-v2",
-    # 4. pmmb2 :
-    "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
-    # 5. pmml2 :
-    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-    # 6. pxrmv1 :
-    "sentence-transformers/paraphrase-xlm-r-multilingual-v1",
-    # 7. finetuned 50-50 2-3-train pattern_en-fr-es
-    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_oaei_final_pattern_en-fr-es",
-    # 8. finetuned 50-50 cmt-conference-iasted sequence (class + property)
-    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_sequence_oaei_final/",
-    # 9. finetuned 50-50 cmt-conference-iasted pattern_en (class + property)
-    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_cmt-conference-iasted_pattern_en_oaei_final",
-    # 10. finetuned 50-50 all-v2 sequence
-    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_sequence_oaei_final",
-    # 11. finetuned 50-50 all-v2 pattern_en
-    "oaei-resources/models/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_pattern_en_oaei_final",
-]
-
-# TODO modelname = "sentence-transformers/paraphrase-xlm-r-multilingual-v1" # pxrmv1
-modelname = modelname_list[10]
+modelname = "oaei-resources/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_sequence_oaei_final"
 reasoner = True
 threshold = 0.5
 
