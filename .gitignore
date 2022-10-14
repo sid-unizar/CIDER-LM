@@ -43,15 +43,6 @@ buildNumber.properties
 .classpath
 
 ciderlm/results/
-ciderlm/results-prev/
-results-aggregated-pre
 ciderlm/oaei-resources/__pycache__/
-melt-maven-matching-ml.md
-docker.md
-ciderlm/oaei-resources/models-pre/
-ciderlm/oaei-resources/models/
-.gitattributes
-models
-models-pre
 ciderlm/oaei-resources/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_sequence_oaei_final
 TODO.md
