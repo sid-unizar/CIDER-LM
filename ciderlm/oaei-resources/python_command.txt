@@ -1,1 +1,1 @@
-/usr/local/bin/python
+/home/javier/anaconda3/envs/ciderlm-env/bin/python

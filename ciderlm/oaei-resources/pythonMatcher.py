@@ -10,7 +10,7 @@ from torch.nn.functional import relu
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-modelname = "oaei-resources/model_sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_sequence_oaei_final"
+modelname = "javiervela/sentence-transformers_distiluse-base-multilingual-cased-v2_50-50_all-v2_sequence_oaei_final"
 reasoner = True
 threshold = 0.5
 
