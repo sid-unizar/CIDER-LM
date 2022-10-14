@@ -15,7 +15,7 @@ public class EvaluationDockerMatcher {
 		MatcherDockerFile dockerMatcher = new MatcherDockerFile("ciderlm-1.0-web", dockerFile);
 
 		// running the matcher on any task
-		ExecutionResultSet ers = Executor.run(TrackRepository.Multifarm.ALL_IN_ONE_TRACK/* .getFirstTestCase() */,
+		ExecutionResultSet ers = Executor.run(TrackRepository.Multifarm.ALL_IN_ONE_TRACK.getFirstTestCase(),
 				dockerMatcher);
 
 		Thread.sleep(20000); // just to be sure that all logs are written.

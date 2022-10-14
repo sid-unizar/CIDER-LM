@@ -1,7 +1,6 @@
 package es.unizar.sid.ciderlm;
 
 import de.uni_mannheim.informatik.dws.melt.matching_data.TrackRepository;
-import de.uni_mannheim.informatik.dws.melt.matching_data.LocalTrack;
 import de.uni_mannheim.informatik.dws.melt.matching_eval.ExecutionResult;
 import de.uni_mannheim.informatik.dws.melt.matching_eval.ExecutionResultSet;
 import de.uni_mannheim.informatik.dws.melt.matching_eval.Executor;
@@ -19,11 +18,7 @@ public class EvaluateDemoPythonMatcher {
 
     public static void main(String[] args) {
 
-        ExecutionResultSet result = Executor.run(new LocalTrack("confOf-sigkdd", "1",
-                "/home/javier/oaei_track_cache/oaei.webdatacommons.org/multifarm/confOf-sigkdd/"), new Main());
-
-        // ExecutionResultSet result =
-        // Executor.run(TrackRepository.Multifarm.ALL_IN_ONE_TRACK, new Main());
+        ExecutionResultSet result = Executor.run(TrackRepository.Multifarm.ALL_IN_ONE_TRACK, new Main());
 
         // ExecutionResultSet result = Executor.run(TrackRepository.Conference.V1, new
         // Main()); // Different track
